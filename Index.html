@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<title>My Shop</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+margin:0;
+background:#f2f2f2;
+}
+
+header{
+background:#111;
+color:white;
+padding:15px;
+text-align:center;
+}
+
+.products{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:20px;
+padding:20px;
+}
+
+.card{
+background:white;
+border-radius:10px;
+padding:15px;
+text-align:center;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+.card img{
+width:100%;
+height:150px;
+object-fit:cover;
+border-radius:8px;
+}
+
+button{
+background:#28a745;
+border:none;
+color:white;
+padding:10px;
+margin-top:10px;
+cursor:pointer;
+border-radius:5px;
+}
+
+button:hover{
+background:#1e7e34;
+}
+
+.cart{
+position:fixed;
+right:0;
+top:0;
+width:320px;
+height:100%;
+background:white;
+box-shadow:-3px 0 10px rgba(0,0,0,0.2);
+padding:20px;
+overflow:auto;
+}
+
+.cart-item{
+display:flex;
+justify-content:space-between;
+margin-bottom:10px;
+font-size:14px;
+}
+
+.qty-btn{
+background:#007bff;
+padding:3px 8px;
+margin:0 3px;
+}
+
+.remove{
+background:red;
+padding:3px 8px;
+}
+
+.checkout{
+background:#ff6600;
+width:100%;
+margin-top:20px;
+}
+
+input{
+width:100%;
+padding:8px;
+margin:5px 0;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+<h1>My Online Shop</h1>
+</header>
+
+<div class="products">
+
+<div class="card">
+<img src="https://via.placeholder.com/200">
+<h3>Product 1</h3>
+<p>₹200</p>
+<button onclick="addToCart('Product 1',200)">Add to Cart</button>
+</div>
+
+<div class="card">
+<img src="https://via.placeholder.com/200">
+<h3>Product 2</h3>
+<p>₹350</p>
+<button onclick="addToCart('Product 2',350)">Add to Cart</button>
+</div>
+
+<div class="card">
+<img src="https://via.placeholder.com/200">
+<h3>Product 3</h3>
+<p>₹150</p>
+<button onclick="addToCart('Product 3',150)">Add to Cart</button>
+</div>
+
+</div>
+
+<div class="cart">
+
+<h2>Cart</h2>
+
+<div id="cartItems"></div>
+
+<h3>Total ₹<span id="total">0</span></h3>
+
+<hr>
+
+<h3>Customer Details</h3>
+
+<input id="name" placeholder="Name">
+<input id="mobile" placeholder="Mobile">
+<input id="address" placeholder="Address">
+
+<button class="checkout" onclick="checkout()">Place Order</button>
+
+</div>
+
+<script>
+
+let cart=[];
+
+function addToCart(name,price){
+
+let item=cart.find(p=>p.name===name);
+
+if(item){
+item.qty++;
+}else{
+cart.push({name,price,qty:1});
+}
+
+updateCart();
+
+}
+
+function changeQty(name,type){
+
+let item=cart.find(p=>p.name===name);
+
+if(type=="inc"){
+item.qty++;
+}
+
+if(type=="dec"){
+item.qty--;
+if(item.qty<=0){
+cart=cart.filter(p=>p.name!==name);
+}
+}
+
+updateCart();
+
+}
+
+function removeItem(name){
+
+cart=cart.filter(p=>p.name!==name);
+
+updateCart();
+
+}
+
+function updateCart(){
+
+let box=document.getElementById("cartItems");
+
+box.innerHTML="";
+
+let total=0;
+
+cart.forEach(item=>{
+
+total+=item.price*item.qty;
+
+box.innerHTML+=`
+<div class="cart-item">
+
+<span>${item.name}</span>
+
+<div>
+
+<button class="qty-btn" onclick="changeQty('${item.name}','dec')">-</button>
+
+${item.qty}
+
+<button class="qty-btn" onclick="changeQty('${item.name}','inc')">+</button>
+
+<button class="remove" onclick="removeItem('${item.name}')">x</button>
+
+</div>
+
+</div>
+`;
+
+});
+
+document.getElementById("total").innerText=total;
+
+}
+
+function checkout(){
+
+if(cart.length==0){
+alert("Cart Empty");
+return;
+}
+
+let name=document.getElementById("name").value;
+let mobile=document.getElementById("mobile").value;
+let address=document.getElementById("address").value;
+
+if(!name || !mobile || !address){
+alert("Fill customer details");
+return;
+}
+
+let total=0;
+let msg="New Order\n\n";
+
+cart.forEach(item=>{
+
+total+=item.price*item.qty;
+
+msg+=item.name+" x"+item.qty+" ₹"+(item.price*item.qty)+"\n";
+
+});
+
+msg+="\nTotal ₹"+total;
+msg+="\nName: "+name;
+msg+="\nMobile: "+mobile;
+msg+="\nAddress: "+address;
+
+window.open("https://wa.me/917291074410?text="+encodeURIComponent(msg));
+
+generateInvoice(name,mobile,address,total);
+
+}
+
+function generateInvoice(name,mobile,address,total){
+
+const { jsPDF } = window.jspdf;
+
+let doc=new jsPDF();
+
+let invoiceNo="INV"+Math.floor(Math.random()*100000);
+
+doc.setFontSize(18);
+doc.text("Invoice",90,20);
+
+doc.setFontSize(12);
+
+doc.text("Invoice No: "+invoiceNo,20,40);
+doc.text("Customer: "+name,20,50);
+doc.text("Mobile: "+mobile,20,60);
+doc.text("Address: "+address,20,70);
+
+let y=90;
+
+cart.forEach(item=>{
+
+doc.text(item.name+" x"+item.qty+" ₹"+(item.price*item.qty),20,y);
+
+y+=10;
+
+});
+
+y+=10;
+
+doc.text("Total ₹"+total,20,y);
+
+doc.save("invoice.pdf");
+
+}
+
+</script>
+
+</body>
+</html>
